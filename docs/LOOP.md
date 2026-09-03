@@ -90,6 +90,7 @@ interface RunRecord {
 ## 3. The Nine Operational Pillars
 
 ### Pillar 1: Execution Isolation & Sandbox Policy
+* **Docker-First Execution Mandate**: Whenever the container `kins_autonomous_sandbox` is active, all shell operations (installing packages, building, running tests, executing scripts) **MUST 100% RUN INSIDE THE CONTAINER** via `docker exec kins_autonomous_sandbox <command>`. Host-level execution of arbitrary packages is strictly forbidden.
 * **Git Worktree Sandbox (`using-git-worktrees`)**: All non-trivial tasks (touching multiple files, dependencies, database migrations, or executing test suites) **MUST** execute inside an isolated Git worktree (`.worktrees/<task-id>`). The `main` branch remains untouched until final approval.
 * **Terminal Sandbox**: Shell execution MUST be confined to the active workspace directory, adhere to least privilege, and forbid host-wide modifications outside the repository.
 * **Containerized Execution (Docker)**: Unattended autonomous tasks (`/goal`, overnight loops), untrusted external code, and third-party build scripts **MUST** execute within an isolated Docker container.

@@ -23,9 +23,11 @@ INITIALIZE ➔ SPEC_GATE ➔ ISOLATE (Git Worktree) ➔ DETECT_STACKS ➔ PLAN (
 - The directory `.eval/` is **STRICTLY READ-ONLY** for all coding agents.
 - Agents **MUST NOT** edit, relax, comment out, delete, or regenerate golden assertions to force tests to pass. Any tampering triggers immediate `FAILED: SPECIFICATION_INTEGRITY`.
 
-### 2. Execution Isolation & Sandboxing
-- Non-trivial tasks **MUST** run inside an isolated Git worktree (`using-git-worktrees`).
-- Unattended or untrusted operations **MUST** execute within Docker/Container sandboxes.
+### 2. Execution Isolation & Sandboxing (DOCKER-FIRST MANDATE)
+- When the sandbox container `kins_autonomous_sandbox` is active, all shell operations (dependency installation, compilation, linting, test suites, script execution) **MUST 100% RUN INSIDE DOCKER** via:
+  `docker exec kins_autonomous_sandbox <command>`
+- Agents **MUST NOT** run package installations (`npm install`, `pip install`) or execute untrusted code directly on the host Windows machine.
+- Non-trivial tasks **MUST** also run inside an isolated Git worktree (`using-git-worktrees`).
 
 ### 3. Hard Resource & Recursion Ceilings
 - `verificationRetry <= 1` (Max 1 targeted fix retry after local test failure).
