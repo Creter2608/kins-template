@@ -33,7 +33,8 @@
       ".devcontainer/**",
       "docker-compose.yml",
       "Dockerfile",
-      ".codegraph/**"
+      ".codegraph/**",
+      "docs/archive/**"
     ]
   },
   "security": {

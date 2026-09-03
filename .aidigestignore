@@ -15,6 +15,7 @@ composer.lock
 dist/
 build/
 out/
+docs/archive/
 *.tsbuildinfo
 *.min.js
 *.min.css

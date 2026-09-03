@@ -179,5 +179,32 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
   - `[MODIFIED]` [wiki/pitfalls.md](wiki/pitfalls.md) (Registered PITFALL-008)
   - `[MODIFIED]` [PITFALLS.md](PITFALLS.md)
 
+---
+
+## [2026-09-03 22:45] UPGRADE | Template Tidiness, Clean-Slate Scaffolding & Loop Rollback
+
+- **Run ID:** `upgrade-tidiness-rollback-20260903`
+- **Outcome:** `PASSED`
+- **Phases Completed:** `INITIALIZE` -> `PLAN` (Layer 1 GPT Blueprint) -> `EXECUTE` (Layer 2 Gemini) -> `VERIFY` ($0 Local CPU) -> `COMPLETE`
+- **Counters:** verificationRetry: 1 (TS18048 strict null check resolved) | qualityRemediation: 0 | globalCycles: 1
+- **Tokens Used:** ~3,500 | **Cost:** ~$0.03
+- **Verification Evidence:**
+  - 28/28 Unit Tests passed in Docker (`kins_autonomous_sandbox`) in 2.15s (Exit code 0)
+  - Strict TypeScript compilation passed cleanly via `npm run typecheck` (0 errors)
+  - Byte-capped runner passed cleanly via `npm run test:ai` (Exit code 0)
+  - Rollback verified: state rollback + history trimming + optional `--code` git restore
+- **Files Modified / Added / Deleted:**
+  - `[DELETED]` `PITFALLS.md` (Root redundancy removed)
+  - `[MOVED]` `docs/plans/ai-ready-template-market-comparison.md` -> [docs/archive/ai-ready-template-market-comparison.md](docs/archive/ai-ready-template-market-comparison.md)
+  - `[MODIFIED]` [.aidigestignore](.aidigestignore) (Shielded `docs/archive/`)
+  - `[MODIFIED]` [repomix.config.json](repomix.config.json) (Shielded `docs/archive/**`)
+  - `[MODIFIED]` [scripts/init-template.mjs](scripts/init-template.mjs) (Clean-slate `# Project Log` & excluded archive/plans)
+  - `[MODIFIED]` [src/engine.ts](src/engine.ts) (Added `rollback()` and `canRollback()`)
+  - `[MODIFIED]` [scripts/ai-loop.mjs](scripts/ai-loop.mjs) (Added `rollback [--code]` CLI command)
+  - `[MODIFIED]` [test/engine.test.ts](test/engine.test.ts) (Added 4 unit tests for engine rollback)
+  - `[MODIFIED]` [test/ai-loop.test.ts](test/ai-loop.test.ts) (Added 3 CLI tests for loop rollback and git restore)
+  - `[MODIFIED]` [test/init-template.test.ts](test/init-template.test.ts) (Added clean-slate assertions)
+
+
 
 

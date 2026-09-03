@@ -78,6 +78,16 @@ test("init-template: generates clean project with fresh golden assertions and va
     assert.equal(fs.existsSync(path.join(target, ".codegraph")), false, ".codegraph must be excluded");
     assert.equal(fs.existsSync(path.join(target, "node_modules")), false, "node_modules must be excluded");
     assert.equal(fs.existsSync(path.join(target, "dist")), false, "dist must be excluded");
+    assert.equal(fs.existsSync(path.join(target, "docs", "archive")), false, "docs/archive must be excluded");
+    assert.equal(fs.existsSync(path.join(target, "docs", "plans")), false, "docs/plans must be excluded");
+    assert.equal(fs.existsSync(path.join(target, "PITFALLS.md")), false, "PITFALLS.md must not exist");
+
+    // Verify clean-slate wiki/log.md
+    const logPath = path.join(target, "wiki", "log.md");
+    assert.ok(fs.existsSync(logPath), "wiki/log.md must exist");
+    const logContent = fs.readFileSync(logPath, "utf-8");
+    assert.equal(logContent, "# Project Log\n");
+    assert.equal(logContent.includes("init-loop-20260903"), false);
 
     // Verify fresh golden assertions & SHA-256
     const goldenJsonPath = path.join(target, ".eval", "golden_assertions.json");

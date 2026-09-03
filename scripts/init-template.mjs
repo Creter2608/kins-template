@@ -26,6 +26,11 @@ const EXCLUDED_PATTERNS = [
   'Thumbs.db'
 ];
 
+const EXCLUDED_PATH_PREFIXES = [
+  path.join('docs', 'archive'),
+  path.join('docs', 'plans')
+];
+
 function printHelp() {
   const help = `
 Usage: node scripts/init-template.mjs <target-directory> [options]
@@ -71,8 +76,15 @@ function validateTargetDirectory(targetDir) {
 }
 
 function shouldExclude(relPath) {
-  const segments = relPath.split(path.sep);
-  return EXCLUDED_PATTERNS.some((pattern) => segments.includes(pattern) || relPath.endsWith('.tmp') || relPath.endsWith('.log'));
+  const normalizedRel = path.normalize(relPath);
+  const segments = normalizedRel.split(path.sep);
+  if (EXCLUDED_PATTERNS.some((pattern) => segments.includes(pattern))) {
+    return true;
+  }
+  if (EXCLUDED_PATH_PREFIXES.some((prefix) => normalizedRel === prefix || normalizedRel.startsWith(prefix + path.sep))) {
+    return true;
+  }
+  return normalizedRel.endsWith('.tmp') || normalizedRel.endsWith('.log');
 }
 
 function copyDirectoryRecursive(src, dest, exclusions = []) {
@@ -166,6 +178,11 @@ async function main() {
       pkg.version = '0.1.0';
       fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
     }
+
+    // Generate clean-slate wiki/log.md
+    const wikiDir = path.join(stagingDir, 'wiki');
+    fs.mkdirSync(wikiDir, { recursive: true });
+    fs.writeFileSync(path.join(wikiDir, 'log.md'), '# Project Log\n', 'utf-8');
 
     // Generate fresh .eval/golden_assertions.json
     const evalDir = path.join(stagingDir, '.eval');

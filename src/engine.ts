@@ -204,6 +204,52 @@ export class LoopEngine {
     return this.snapshot();
   }
 
+  canRollback(): boolean {
+    if (this.isTerminal()) {
+      return false;
+    }
+    return this.state.history.length > 0;
+  }
+
+  rollback(): LoopState {
+    if (this.isTerminal()) {
+      throw new LoopError(
+        "TRANSITION_INVALID",
+        "transition",
+        `Cannot rollback from terminal status '${this.state.status}'`
+      );
+    }
+
+    if (this.state.history.length === 0) {
+      throw new LoopError(
+        "STATE_INVALID",
+        "state",
+        "Cannot rollback: transition history is empty"
+      );
+    }
+
+    const lastTransition = this.state.history[this.state.history.length - 1];
+    if (!lastTransition) {
+      throw new LoopError(
+        "STATE_INVALID",
+        "state",
+        "Cannot rollback: transition history is empty"
+      );
+    }
+    const priorPhase = lastTransition.from;
+    const nextHistory = this.state.history.slice(0, -1);
+    const nextStatus: RunStatus = nextHistory.length === 0 ? "ready" : "running";
+
+    this.state = {
+      ...this.state,
+      currentPhase: priorPhase,
+      status: nextStatus,
+      history: Object.freeze(nextHistory)
+    };
+
+    return this.snapshot();
+  }
+
   isTerminal(): boolean {
     return this.state.status === "succeeded" || this.state.status === "failed" || this.state.status === "blocked";
   }

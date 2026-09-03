@@ -5,6 +5,7 @@
  * Enforces atomic state persistence, file locking, budget ceilings, and golden verification.
  */
 
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as process from 'node:process';
@@ -57,6 +58,7 @@ Commands:
   init                     Initialize a new loop run
   status                   Display current loop state snapshot
   transition <phase>       Transition to the specified next phase
+  rollback [--code]        Rollback to the previous phase in history (optionally restore tracked git changes)
   retry [count]            Consume retries from the retry budget (default: 1)
   fail <code> <message>    Mark run as failed with code and explanation
   verify                   Validate workspace assertions against .eval/golden_assertions.json
@@ -260,6 +262,49 @@ async function main() {
             process.stdout.write(JSON.stringify(nextState, null, 2) + '\n');
           } else {
             process.stdout.write(`[ai-loop] Transitioned to ${nextState.currentPhase} (Status: ${nextState.status})\n`);
+          }
+        } finally {
+          lock.release();
+        }
+        break;
+      }
+
+      case 'rollback': {
+        let revertCode = false;
+        for (const arg of cmdArgs) {
+          if (arg === '--code') {
+            revertCode = true;
+          } else {
+            throw new LoopError('CONFIG_INVALID', 'configuration', `Unknown rollback option: ${arg}`);
+          }
+        }
+
+        lock.acquire();
+        try {
+          const savedState = loadState(stateFilePath);
+          const opts = getEngineOptions(savedState.runId, savedState.goldenSha256);
+          const engine = new LoopEngine(opts, savedState);
+          const nextState = engine.rollback();
+
+          if (revertCode) {
+            try {
+              execFileSync('git', ['restore', '--staged', '--worktree', '--', '.'], {
+                cwd: process.cwd(),
+                stdio: ['ignore', 'pipe', 'pipe']
+              });
+            } catch {
+              execFileSync('git', ['checkout', '--', '.'], {
+                cwd: process.cwd(),
+                stdio: ['ignore', 'pipe', 'pipe']
+              });
+            }
+          }
+
+          atomicSaveState(stateFilePath, nextState);
+          if (jsonOutput) {
+            process.stdout.write(JSON.stringify(nextState, null, 2) + '\n');
+          } else {
+            process.stdout.write(`[ai-loop] Rolled back to ${nextState.currentPhase} (Status: ${nextState.status})${revertCode ? ' [Code restored]' : ''}\n`);
           }
         } finally {
           lock.release();
