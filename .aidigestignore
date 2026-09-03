@@ -35,6 +35,7 @@ coverage/
 .worktrees/
 .vscode/
 .idea/
+.codegraph/
 
 # Binaries & Media Assets
 *.png

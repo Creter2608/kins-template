@@ -17,6 +17,7 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 
 const EXCLUDED_PATTERNS = [
   '.git',
+  '.codegraph',
   'node_modules',
   'dist',
   '.ai',

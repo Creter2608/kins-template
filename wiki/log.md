@@ -127,3 +127,22 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
   - `[NEW]` [wiki/decisions/ADR-002-multi-ide-and-persistent-loop.md](wiki/decisions/ADR-002-multi-ide-and-persistent-loop.md)
   - `[MODIFIED]` [wiki/index.md](wiki/index.md)
   - `[MODIFIED]` [AGENTS.md](AGENTS.md)
+
+---
+
+## [2026-09-03 20:53] REFINEMENT | CodeGraph Shielding & Scaffolding Polish
+
+- **Run ID:** `refine-codegraph-shielding-20260903`
+- **Outcome:** `PASSED`
+- **Phases Completed:** `INITIALIZE` -> `PLAN` (Layer 1 GPT Blueprint) -> `EXECUTE` (Layer 2 Gemini) -> `VERIFY` ($0 Local CPU) -> `COMPLETE`
+- **Verification Evidence:**
+  - 21/21 Unit Tests passed via `npm test` and `npm run test:ai` (1029ms, Exit code 0)
+  - Typecheck passed cleanly via `npm run typecheck` (0 errors)
+  - Diff-First check: only intended target lines modified
+- **Files Modified:**
+  - `[MODIFIED]` [scripts/init-template.mjs](scripts/init-template.mjs) (Excluded `.codegraph` from stamped-out projects)
+  - `[MODIFIED]` [test/init-template.test.ts](test/init-template.test.ts) (Added `.codegraph` absence assertion)
+  - `[MODIFIED]` [.aidigestignore](.aidigestignore) (Shielded `.codegraph/` from context digestors)
+  - `[MODIFIED]` [repomix.config.json](repomix.config.json) (Shielded `.codegraph/**` from repomix context packs)
+  - `[MODIFIED]` [README.md](README.md) (Linked `wiki/pitfalls.md` and added code placement guidelines)
+

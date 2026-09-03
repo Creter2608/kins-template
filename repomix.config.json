@@ -32,7 +32,8 @@
       "*.log",
       ".devcontainer/**",
       "docker-compose.yml",
-      "Dockerfile"
+      "Dockerfile",
+      ".codegraph/**"
     ]
   },
   "security": {

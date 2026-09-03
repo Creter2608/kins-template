@@ -75,6 +75,7 @@ test("init-template: generates clean project with fresh golden assertions and va
 
     // Verify excluded files are not present
     assert.equal(fs.existsSync(path.join(target, ".git")), false, ".git must be excluded");
+    assert.equal(fs.existsSync(path.join(target, ".codegraph")), false, ".codegraph must be excluded");
     assert.equal(fs.existsSync(path.join(target, "node_modules")), false, "node_modules must be excluded");
     assert.equal(fs.existsSync(path.join(target, "dist")), false, "dist must be excluded");
 
