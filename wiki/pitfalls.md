@@ -15,6 +15,7 @@ This document is maintained autonomously following **Andrej Karpathy's LLM-Wiki 
 | **PITFALL-005** | Terminal buffer token flooding from verbose error logs | `BUDGET_EXHAUSTED` | Hundreds of compiler error lines drain context | Cap CLI streams at 32 KiB using `scripts/ai-exec.mjs` |
 | **PITFALL-006** | In-memory loop state loss across process termination | `STATE_INVALID` | Process exit loses current loop phase and counters | Persist state atomically to `.ai/state.json` via `scripts/ai-loop.mjs` |
 | **PITFALL-007** | Infinite unguided retry loops without root-cause hypothesis | `BUDGET_EXHAUSTED` | Exhausting retry quota with blind code mutations | Enforce hard cap `verificationRetry <= 1` + require root-cause hypothesis |
+| **PITFALL-008** | Cross-platform CRLF vs LF line ending hash divergence | `INTEGRITY_MISMATCH` | Checksum mismatch in CI (Ubuntu) vs local (Windows) | Enforce `.gitattributes` (`eol=lf`) and canonical LF SHA-256 anchors |
 
 ---
 
@@ -88,6 +89,16 @@ This document is maintained autonomously following **Andrej Karpathy's LLM-Wiki 
 - **Mandatory Invariant:**
   - **HARD CAP = 1 RETRY:** Maximum 1 targeted fix retry (`verificationRetry <= 1`).
   - Prior to modifying code, formulate and document an explicit root-cause hypothesis. If tests fail a second time, stop immediately and escalate to the human engineer.
+
+---
+
+### PITFALL-008: Cross-Platform CRLF vs LF Line Ending Hash Divergence
+- **Context:** Computing cryptographic SHA-256 file checksums across Windows and Linux (CI/Docker).
+- **Observed Failure:** `.eval/golden_assertions.json` verified locally on Windows with hash `c9e3edc...`, but failed in GitHub Actions (Ubuntu) with `eb915b6...`, producing `INTEGRITY_MISMATCH`.
+- **Root Cause:** Default Windows Git setting (`core.autocrlf=true`) checks out text files with CRLF (`\r\n`), altering the byte stream and generating a different SHA-256 hash than Git's normalized LF (`\n`) on Linux runners.
+- **Mandatory Invariant:**
+  - Standardize repository line endings by committing `.gitattributes` containing `* text=auto eol=lf` and `.eval/* text eol=lf`.
+  - All golden trust anchors (`.eval/*.sha256`) and test assertion constants MUST be calculated strictly against canonical LF line endings.
 
 ---
 

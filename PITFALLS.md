@@ -12,5 +12,6 @@ This repository maintains a living registry of failure modes, cognitive traps, a
 5. **PITFALL-005**: Bound terminal outputs to 32 KiB using `scripts/ai-exec.mjs`.
 6. **PITFALL-006**: Persist loop state using `scripts/ai-loop.mjs` with atomic file locking.
 7. **PITFALL-007**: Hard cap = 1 targeted retry with root-cause hypothesis.
+8. **PITFALL-008**: Enforce `.gitattributes` (`eol=lf`) and canonical LF SHA-256 anchors to prevent cross-platform hash divergence.
 
 👉 See full diagnostic breakdowns and recovery guidelines in **[wiki/pitfalls.md](wiki/pitfalls.md)**.

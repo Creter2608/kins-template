@@ -154,8 +154,30 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
 - **Outcome:** `PASSED`
 - **Root Causes:**
   1. `PITFALL-002`: `.eval/golden_assertions.sha256` contained POSIX trailing filename, causing `parseSha256Hex` rejection in Step 4.
-  2. Step 5 Docker test ran without bind-mounting `${{ github.workspace }}` into `/workspace`.
-- **Files Modified:**
   - `[MODIFIED]` [.github/workflows/ai-verify.yml](.github/workflows/ai-verify.yml)
+
+---
+
+## [2026-09-03 22:23] BUGFIX | Cross-Platform CRLF vs LF Line Ending Hash Divergence (PITFALL-008)
+
+- **Run ID:** `fix-crlf-lf-divergence-20260903`
+- **Outcome:** `PASSED`
+- **Root Cause (PITFALL-008):**
+  Windows Git checked out `.eval/golden_assertions.json` with CRLF (`\r\n`), altering the byte SHA-256 to `c9e3edc...`, whereas Git normalized to LF (`\n`) on Ubuntu CI, producing `eb915b6...`.
+- **Remediation:**
+  1. Added `.gitattributes` to enforce `eol=lf` across all environments.
+  2. Normalized `.eval/golden_assertions.json` to canonical LF line endings.
+  3. Synchronized trusted SHA-256 anchor across `golden.test.ts` and `golden_assertions.sha256`.
+- **Verification Evidence:**
+  - Local Windows: 21/21 tests passed (1049ms)
+  - Linux Docker Container (`test:docker`): 21/21 tests passed (1407ms)
+- **Files Added / Modified:**
+  - `[NEW]` [.gitattributes](.gitattributes)
+  - `[MODIFIED]` [.eval/golden_assertions.json](.eval/golden_assertions.json)
+  - `[MODIFIED]` [.eval/golden_assertions.sha256](.eval/golden_assertions.sha256)
+  - `[MODIFIED]` [test/golden.test.ts](test/golden.test.ts)
+  - `[MODIFIED]` [wiki/pitfalls.md](wiki/pitfalls.md) (Registered PITFALL-008)
+  - `[MODIFIED]` [PITFALLS.md](PITFALLS.md)
+
 
 

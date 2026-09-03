@@ -6,7 +6,7 @@ import { loadVerifiedGoldenAssertions, parseGoldenAssertions, evaluateGoldenAsse
 import { LoopError } from "../src/errors.js";
 
 const GOLDEN_PATH = path.resolve(".eval/golden_assertions.json");
-const TRUSTED_SHA = "c9e3edcf9d3c16427221490a55e17de7414cb77b3c6653ffa63073cacf81889c";
+const TRUSTED_SHA = "eb915b6ae8db231130dc6b21499ba893d94ba3a8f941164e6e2bc4cc40104cc2";
 
 test("golden: verifies repository golden assertions against trusted sha", async () => {
   const { digest, document } = await loadVerifiedGoldenAssertions(GOLDEN_PATH, TRUSTED_SHA);
