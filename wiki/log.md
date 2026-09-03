@@ -102,3 +102,28 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
   - `[NEW]` [Dockerfile](Dockerfile)
   - `[NEW]` [docker-compose.yml](docker-compose.yml)
   - `[NEW]` [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)
+
+---
+
+## [2026-09-03 20:35] UPGRADE | Market Adapters, Persistent Loop & Living Pitfalls Registry
+
+- **Run ID:** `upgrade-market-and-pitfalls-20260903`
+- **Outcome:** `PASSED`
+- **Phases Completed:** `INITIALIZE` -> `PLAN` -> `EXECUTE` -> `VERIFY` -> `REALITY_CHECK` -> `COMPLETE`
+- **Verification Evidence:**
+  - 21/21 Unit Tests passed in Docker (`kins_autonomous_sandbox`)
+  - Typecheck passed: 0 errors
+  - Golden Assertions SHA-256 verified: 100% match
+- **Files Added / Modified:**
+  - `[NEW]` [.windsurfrules](.windsurfrules)
+  - `[NEW]` [.clinerules](.clinerules)
+  - `[NEW]` [.roomodes](.roomodes)
+  - `[NEW]` [mcp.json](mcp.json)
+  - `[NEW]` [.github/workflows/ai-verify.yml](.github/workflows/ai-verify.yml)
+  - `[NEW]` [scripts/ai-loop.mjs](scripts/ai-loop.mjs)
+  - `[NEW]` [scripts/init-template.mjs](scripts/init-template.mjs)
+  - `[NEW]` [wiki/pitfalls.md](wiki/pitfalls.md) (Living Pitfalls & Anti-Patterns Registry)
+  - `[NEW]` [PITFALLS.md](PITFALLS.md) (Root thin pointer)
+  - `[NEW]` [wiki/decisions/ADR-002-multi-ide-and-persistent-loop.md](wiki/decisions/ADR-002-multi-ide-and-persistent-loop.md)
+  - `[MODIFIED]` [wiki/index.md](wiki/index.md)
+  - `[MODIFIED]` [AGENTS.md](AGENTS.md)

@@ -11,7 +11,10 @@ A high-performance, deterministic, and security-hardened codebase template desig
 - **Anti-Token-Drain Protocol**: Local CPU verification ($0 LLM tokens) with hard cap of 1 retry on test failure.
 - **Adversarial Quality Gates**: Built-in integration with `agency-reality-checker` and `agency-ai-generated-code-security-auditor`.
 - **Karpathy Behavioral Invariants**: Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution.
-- **Living Knowledge Compounding ([wiki/](wiki/))**: Persistent markdown wiki based on Andrej Karpathy's `llm-wiki` architecture.
+- **Multi-Agent Thin Adapters**: Native zero-drift pointers for Claude Code ([`CLAUDE.md`](CLAUDE.md)), Cursor ([`.cursor/rules/`](.cursor/rules/autonomous-loop.mdc)), and GitHub Copilot ([`.github/`](.github/copilot-instructions.md)).
+- **Token Shielding & Discovery**: Standardized [`llms.txt`](llms.txt) API roadmap, [`repomix.config.json`](repomix.config.json) compression, and [`.aidigestignore`](.aidigestignore).
+- **Byte-Capped AI Runners**: `npm run test:ai` and `npm run typecheck:ai` capping output at 32 KiB to prevent terminal token flooding.
+- **Living Knowledge & ADRs ([wiki/](wiki/))**: Persistent markdown wiki with structured Architecture Decision Records ([wiki/decisions/](wiki/decisions/ADR-001-two-tier-agent-loop.md)).
 - **CodeGraph Ready**: Ready for instant AST indexing via `codegraph init`.
 
 ---

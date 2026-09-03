@@ -77,6 +77,8 @@ When executing engineering workflows, Layer 1 MUST automatically route tasks to 
 <!-- KARPATHY_GUIDELINES_START -->
 ## Karpathy Behavioral Invariants & Anti-Pitfall Principles
 
+👉 **[Living Pitfalls Registry (wiki/pitfalls.md)](wiki/pitfalls.md)**: Mandatory catalog of past failure modes and cognitive traps. Consult before planning or code changes.
+
 Adhere strictly to Andrej Karpathy's core engineering principles:
 
 ### 1. Think Before Coding
