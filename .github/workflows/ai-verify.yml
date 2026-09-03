@@ -43,7 +43,7 @@ jobs:
           node --input-type=module -e "
             import fs from 'node:fs';
             import { validateWorkspace, parseSha256Hex } from './dist/src/index.js';
-            const expectedSha = fs.readFileSync('.eval/golden_assertions.sha256', 'utf-8').trim();
+            const expectedSha = fs.readFileSync('.eval/golden_assertions.sha256', 'utf-8').trim().split(/\s+/)[0];
             const results = await validateWorkspace({
               goldenPath: '.eval/golden_assertions.json',
               expectedSha256: expectedSha
@@ -54,4 +54,4 @@ jobs:
       - name: Verify Docker Container Build & Execution
         run: |
           docker build -t test-ai-sandbox .
-          docker run --rm test-ai-sandbox npm test
+          docker run --rm -v "${{ github.workspace }}:/workspace" -w /workspace test-ai-sandbox npm test

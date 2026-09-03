@@ -146,3 +146,16 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
   - `[MODIFIED]` [repomix.config.json](repomix.config.json) (Shielded `.codegraph/**` from repomix context packs)
   - `[MODIFIED]` [README.md](README.md) (Linked `wiki/pitfalls.md` and added code placement guidelines)
 
+---
+
+## [2026-09-03 22:12] BUGFIX | CI Workflow SHA-256 Parser (PITFALL-002) & Docker Mount
+
+- **Run ID:** `fix-ci-workflow-20260903`
+- **Outcome:** `PASSED`
+- **Root Causes:**
+  1. `PITFALL-002`: `.eval/golden_assertions.sha256` contained POSIX trailing filename, causing `parseSha256Hex` rejection in Step 4.
+  2. Step 5 Docker test ran without bind-mounting `${{ github.workspace }}` into `/workspace`.
+- **Files Modified:**
+  - `[MODIFIED]` [.github/workflows/ai-verify.yml](.github/workflows/ai-verify.yml)
+
+
