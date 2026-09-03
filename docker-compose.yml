@@ -17,4 +17,4 @@ services:
           memory: 2048M
     stdin_open: true
     tty: true
-    command: ["npm", "test"]
+    command: ["tail", "-f", "/dev/null"]

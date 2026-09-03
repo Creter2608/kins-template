@@ -12,8 +12,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /workspace
 
-# Set default user to node (non-root) for security isolation
-USER node
-
 # Default command
 CMD ["npm", "test"]

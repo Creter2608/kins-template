@@ -14,6 +14,5 @@
         "dbaeumer.vscode-eslint"
       ]
     }
-  },
-  "remoteUser": "node"
+  }
 }
