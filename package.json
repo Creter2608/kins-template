@@ -10,7 +10,10 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test --test-concurrency=1 dist/test/*.test.js"
+    "test": "npm run build && node --test --test-concurrency=1 dist/test/*.test.js",
+    "test:docker": "docker run --rm -v \".:/workspace\" -w /workspace node:22-bookworm-slim npm test",
+    "typecheck:docker": "docker run --rm -v \".:/workspace\" -w /workspace node:22-bookworm-slim npm run typecheck",
+    "sandbox:sh": "docker run --rm -it -v \".:/workspace\" -w /workspace node:22-bookworm-slim /bin/sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

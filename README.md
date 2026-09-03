@@ -32,3 +32,23 @@ A high-performance, deterministic, and security-hardened codebase template desig
    ```bash
    cat wiki/log.md
    ```
+
+---
+
+## 🐳 Docker Sandbox & Container Isolation
+
+This repository includes turnkey Docker and DevContainer support for 100% isolated execution:
+
+- **Run tests inside Docker container:**
+  ```bash
+  npm run test:docker
+  ```
+- **Type-check inside Docker:**
+  ```bash
+  npm run typecheck:docker
+  ```
+- **Interactive Sandbox Shell:**
+  ```bash
+  npm run sandbox:sh
+  ```
+- **Dev Containers:** Open in VS Code / Antigravity / Cursor and click *"Reopen in Container"* for a fully isolated development environment.
