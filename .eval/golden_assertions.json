@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Protected Golden Test Assertions",
+  "description": "READ-ONLY. Managed exclusively by Layer 1 Architect. Modifying this file triggers FAILED: SPECIFICATION_INTEGRITY.",
+  "assertions": [
+    {
+      "id": "ASSERT-01",
+      "in": "blueprint SHA mismatch",
+      "out": "FAILED:SPECIFICATION_INTEGRITY; no execution"
+    },
+    {
+      "id": "ASSERT-02",
+      "in": ".eval assertion weakened",
+      "out": "Reality Checker rejects release"
+    },
+    {
+      "id": "ASSERT-03",
+      "in": "port lock then semantic failure",
+      "out": "verificationRetry=1; infra attempt excluded"
+    },
+    {
+      "id": "ASSERT-04",
+      "in": "tokensUsed=60001",
+      "out": "BLOCKED_OR_FAILED; stop immediately"
+    },
+    {
+      "id": "ASSERT-05",
+      "in": "globalCycles=6",
+      "out": "FAILED; no remediation"
+    }
+  ]
+}
