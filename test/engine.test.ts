@@ -185,13 +185,22 @@ test("engine: rollback from terminal states is rejected without mutation", () =>
     goldenSha256: DUMMY_SHA,
     runId: "run-rollback-term-2"
   });
-  engineFailed.transition("SPEC_GATE");
+  engineFailed.transition("SPEC_GATE", { triggeredBy: "tester", autoAdvanced: true });
+  const specGateHistory = engineFailed.snapshot().history[0];
+  assert.equal(specGateHistory?.triggeredBy, "tester");
+  assert.equal(specGateHistory?.autoAdvanced, true);
+  assert.ok((specGateHistory?.timestamp ?? 0) > 0);
+
+  engineFailed.transition("ISOLATE");
+  engineFailed.consumeRetry(1);
   engineFailed.fail("EXECUTION_FAILED", "Test fatal error");
   assert.equal(engineFailed.snapshot().status, "failed");
+  assert.equal(engineFailed.canRollback(), true);
 
-  assert.throws(
-    () => engineFailed.rollback(),
-    (err: unknown) => err instanceof LoopError && err.code === "TRANSITION_INVALID"
-  );
-  assert.equal(engineFailed.snapshot().currentPhase, "FAILED");
+  const recovered = engineFailed.rollback();
+  assert.equal(recovered.currentPhase, "SPEC_GATE");
+  assert.equal(recovered.status, "running");
+  assert.equal(recovered.lastError, undefined);
+  assert.equal(recovered.usage.retries, 1, "Recovery must not reset retry counters");
 });
+

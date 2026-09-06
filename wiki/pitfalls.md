@@ -16,6 +16,11 @@ This document is maintained autonomously following **Andrej Karpathy's LLM-Wiki 
 | **PITFALL-006** | In-memory loop state loss across process termination | `STATE_INVALID` | Process exit loses current loop phase and counters | Persist state atomically to `.ai/state.json` via `scripts/ai-loop.mjs` |
 | **PITFALL-007** | Infinite unguided retry loops without root-cause hypothesis | `BUDGET_EXHAUSTED` | Exhausting retry quota with blind code mutations | Enforce hard cap `verificationRetry <= 1` + require root-cause hypothesis |
 | **PITFALL-008** | Cross-platform CRLF vs LF line ending hash divergence | `INTEGRITY_MISMATCH` | Checksum mismatch in CI (Ubuntu) vs local (Windows) | Enforce `.gitattributes` (`eol=lf`) and canonical LF SHA-256 anchors |
+| **PITFALL-009** | Broad keyword classification & startup offset zero in log tailing | `STATE_INVALID` | False-positive critical alarms from INFO/echoes & stale logs | Enforce structured severity priority, suppress tool echoes, tail from EOF |
+| **PITFALL-010** | Context dilution & sub-threshold cache miss in Multi-Agent prompt caching | `BUDGET_EXHAUSTED` | Cache hit 0% or ~6% despite static prefix | Enforce $\ge 1,024$ invariant prefix, Multi-Zone layout, and CodeGraph pruning |
+| **PITFALL-011** | Root-word inflection mismatch in heuristic path filters (`verify` vs `verifier`) | `SEMANTIC_CODE` | False-negative mock/anti-gaming detection; verifier.js bypassed | Use morphological root-stems (`/(?:verif|validat|eval)/i`) instead of whole-word base forms |
+| **PITFALL-013** | Arbitrary `HEAD~1` base commit in evaluation diffs triggering false anti-gaming disqualification | `INTEGRITY_MISMATCH` | Benchmark run fails with `SPECIFICATION INTEGRITY VIOLATION` on release commits | Default `baseCommit` to `HEAD` (or explicit target/merge-base), never hardcoded `HEAD~1` |
+| **PITFALL-014** | Boilerplate / Hallucinated Transparency Tagging & CodeGraph MCP Bypass | `INTEGRITY_MISMATCH` | Agent outputs status tags without executing tool, or uses shell workarounds instead of registered MCP | NEVER emit tags without execution in current turn; ALWAYS invoke official MCP tool when available |
 
 ---
 
@@ -99,6 +104,72 @@ This document is maintained autonomously following **Andrej Karpathy's LLM-Wiki 
 - **Mandatory Invariant:**
   - Standardize repository line endings by committing `.gitattributes` containing `* text=auto eol=lf` and `.eval/* text eol=lf`.
   - All golden trust anchors (`.eval/*.sha256`) and test assertion constants MUST be calculated strictly against canonical LF line endings.
+
+---
+
+### PITFALL-009: Broad Keyword Classification & Startup Offset Zero in Log Tailing
+- **Context:** Real-time log stream processing (`cli.log`, runtime logs) feeding error triaging and alerts.
+- **Observed Failure:** The system persistently triggers critical error alarms upon launch and during routine operations, despite no actual failure.
+- **Root Cause:**
+  1. Unanchored keyword matching (`/Failed to/i`, `/Exception/`) promoted benign Google glog INFO lines (`I0904 ... Failed to find optional cache`) and tool execution command echoes (`run_command: git grep ERROR; catch (error)`) to critical `ERROR` severity.
+  2. Starting log tailing from byte offset 0 replayed historical errors from terminated sessions into the new session snapshot.
+- **Mandatory Invariant:**
+  - Structured severity prefixes (`I\d{4}` for INFO, `W\d{4}` for WARNING, `E\d{4}` for ERROR) strictly outrank body keywords. Glog INFO lines MUST NEVER be classified as errors.
+  - Suppress tool invocation and command echo envelopes before message classification.
+  - Tail existing log files from EOF at service startup, and provide an explicit non-destructive `clearLogs()` operation.
+
+---
+
+### PITFALL-010: Context Dilution & Sub-Threshold Cache Miss in Multi-Agent Prompt Caching
+- **Context:** Prompt caching in Layer 1 Prompt Architect (`gpt_architect` or API models).
+- **Observed Failure:** Model telemetry reporting 0% or ~6% cache hit percentage despite having an invariant static system prompt.
+- **Root Cause:**
+  1. *Sub-Threshold Invariant Prefix*: Prompt caching in modern LLMs (e.g. OpenAI GPT-4o, Claude, etc.) requires a contiguous static prefix $\ge 1,024$ tokens. Shorter system prompts (~750 tokens) are never cached (0% hit rate).
+  2. *Context Dilution Paradox*: Even with a valid static prefix, appending 18,000+ unpruned dynamic tokens balloons total input to ~20,000 tokens. The mathematical ratio `cached / total` collapses to negligible levels.
+  3. *Immediate Prefix Divergence*: Mixing dynamic elements (variable timestamps, run IDs, unstable paths) before stable templates breaks prefix continuity across turns.
+- **Mandatory Invariant:**
+  - Enforce `STATIC_SYSTEM_PROMPT` $\ge 1,024$ tokens with zero volatile metadata (no timestamps, run IDs, or dynamic counters).
+  - Adopt **Multi-Zone Message Architecture**: Message 0 (`system` invariant platform head), Message 1 (`user` stable repository/template context), Message 2 (`user` dynamic task & pruned context).
+  - Enforce surgical **Context Pruning**: Transmit only symbol signatures, interfaces, and essential call paths (300–800 tokens max) to keep total input compact and maintain an $80\%+$ cache hit rate.
+
+---
+
+### PITFALL-011: Root-Word Inflection Mismatch in Heuristic Path Filters (`verify` vs `verifier`)
+- **Context:** Scanning file paths for verification and harness infrastructure in security/anti-gaming heuristics.
+- **Observed Failure:** Test case injecting mock evasion into `src/verifier.js` was unexpectedly marked clean (`result.clean: true`), bypassing detection.
+- **Root Cause:**
+  - English morphological inflections often replace vowels or suffixes (e.g., base verb `verify` ends in `y`, but noun `verifier`, adjective `verifying`, and nominalization `verification` replace `y` with `i`).
+  - The path regex `/(?:verify|validate|evaluation|integrity|harness)/i` strictly looked for the full word `verify`, completely bypassing `src/verifier.js` (`isVerifierFile` evaluated to `false`).
+- **Mandatory Invariant:**
+  - Semantic path classification heuristics targeting domains **MUST** match common morphological root-stems rather than full inflected base forms:
+    `const HARNESS_OR_VERIFIER_PATH_REGEX = /(?:verif|validat|eval|integrity|harness)/i;`
+  - Always verify with explicit tests exercising inflected forms (`verifier.js`, `validator.ts`, `evaluator.mjs`).
+
+---
+
+### PITFALL-013: Arbitrary `HEAD~1` Base Commit in Evaluation Diffs Triggering False Anti-Gaming Disqualification
+- **Context:** Resolving baseline commit (`baseCommit`) for SWE-bench style evaluation harness and anti-gaming diff verification.
+- **Observed Failure:** Running benchmark or evaluation disqualifies the run with `SPECIFICATION INTEGRITY VIOLATION`, falsely claiming active test assertions were removed in tests.
+- **Root Cause:**
+  - Verification hardcoded `baseCommit` resolution to `git rev-parse HEAD~1`.
+  - When `HEAD` is a release or merge commit that legitimately updated assertion logic or dependencies, diffing against `HEAD~1` includes the entire prior commit in the anti-gaming diff.
+  - The anti-gaming engine flags deleted assertion lines (`- assert...`) from the previous version as unauthorized agent tampering.
+- **Mandatory Invariant:**
+  - In working tree evaluation, always default `baseCommit` to `HEAD` (or an explicit trusted base / merge-base with target branch), so that only uncommitted active agent changes are subjected to anti-gaming inspection.
+  - Never hardcode `HEAD~1`.
+
+---
+
+### PITFALL-014: Boilerplate / Hallucinated Transparency Tagging & CodeGraph MCP Bypass
+- **Context:** Executing workflows under system transparency mandates (e.g. CodeGraph context tags).
+- **Observed Failure:**
+  - The agent outputs status tags like `🔍 [CodeGraph Context]: Extracted <N> symbols...` mechanically across consecutive turns even when CodeGraph was NOT queried in that turn.
+  - The agent resorts to running ad-hoc invisible shell scripts rather than executing registered MCP tools, rendering the tool invisible on the user's chat UI.
+- **Root Cause:**
+  - LLM inertia copying boilerplate prompt prefixes without verifying whether a tool call was actually executed in the current turn.
+- **Mandatory Invariants:**
+  1. **Strict Tagging Grounding:** An agent **MUST NEVER** output `🔍 [CodeGraph Context]: Extracted <N> symbols...` unless an actual CodeGraph query was executed IN THAT VERY TURN. If no query occurred, omit the tag entirely or explicitly state: `🔍 [CodeGraph Context]: None (No symbols queried this turn)`.
+  2. **MCP-First Routing:** When MCP servers are available, the agent **MUST** call the official MCP tool as the primary interface so the execution is rendered transparently on the client UI.
 
 ---
 

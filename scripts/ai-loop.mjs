@@ -61,6 +61,8 @@ Commands:
   rollback [--code]        Rollback to the previous phase in history (optionally restore tracked git changes)
   retry [count]            Consume retries from the retry budget (default: 1)
   fail <code> <message>    Mark run as failed with code and explanation
+  isolate --task <id>      Create or reuse an isolated Git worktree sandbox for a task
+  pitfalls [query]         Extract matching invariant pitfall guards from wiki/pitfalls.md
   verify                   Validate workspace assertions against .eval/golden_assertions.json
 
 Options:
@@ -124,7 +126,16 @@ function atomicSaveState(stateFile, state) {
   const tmpFile = `${stateFile}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
   const serialized = JSON.stringify(state, null, 2) + '\n';
   fs.writeFileSync(tmpFile, serialized, 'utf-8');
-  fs.renameSync(tmpFile, stateFile);
+  try {
+    fs.renameSync(tmpFile, stateFile);
+  } catch (err) {
+    if (err && (err.code === 'EPERM' || err.code === 'EBUSY')) {
+      fs.copyFileSync(tmpFile, stateFile);
+      try { fs.unlinkSync(tmpFile); } catch {}
+    } else {
+      throw err;
+    }
+  }
 }
 
 function loadState(stateFile) {
@@ -181,6 +192,7 @@ async function main() {
   let stateFileArg = null;
   let runIdArg = null;
   let goldenShaArg = null;
+  let taskArg = null;
   let jsonOutput = false;
 
   for (let i = 0; i < rawArgs.length; i++) {
@@ -191,6 +203,8 @@ async function main() {
       runIdArg = rawArgs[++i];
     } else if (arg === '--golden-sha') {
       goldenShaArg = rawArgs[++i];
+    } else if (arg === '--task') {
+      taskArg = rawArgs[++i];
     } else if (arg === '--json') {
       jsonOutput = true;
     } else if (!arg.startsWith('-') && command === null) {
@@ -352,6 +366,112 @@ async function main() {
           }
         } finally {
           lock.release();
+        }
+        break;
+      }
+
+      case 'isolate': {
+        const taskId = taskArg || cmdArgs[0];
+        if (!taskId || !/^[a-z0-9][a-z0-9._-]{0,63}$/.test(taskId) || taskId.includes('..')) {
+          throw new LoopError('CONFIG_INVALID', 'configuration', `Invalid task ID: '${taskId}'. Must match ^[a-z0-9][a-z0-9._-]{0,63}$`);
+        }
+        const branch = `task/${taskId}`;
+        const worktreePath = path.resolve(REPO_ROOT, '.worktrees', taskId);
+
+        let reused = false;
+        if (fs.existsSync(worktreePath)) {
+          try {
+            const wtList = execFileSync('git', ['-c', 'safe.directory=*', 'worktree', 'list', '--porcelain'], {
+              cwd: REPO_ROOT,
+              encoding: 'utf-8',
+              stdio: ['ignore', 'pipe', 'pipe']
+            });
+            const normWt = path.normalize(worktreePath).toLowerCase().replace(/\\/g, '/');
+            const normList = wtList.toLowerCase().replace(/\\/g, '/');
+            if (normList.includes(normWt)) {
+              reused = true;
+            } else {
+              throw new LoopError('STATE_CONFLICT', 'state', `Directory exists but is not a valid git worktree: ${worktreePath}`);
+            }
+          } catch (err) {
+            if (err instanceof LoopError) throw err;
+            throw new LoopError('STATE_CONFLICT', 'state', `Conflicting path exists at ${worktreePath}`);
+          }
+        } else {
+          const wtDir = path.dirname(worktreePath);
+          if (!fs.existsSync(wtDir)) {
+            fs.mkdirSync(wtDir, { recursive: true });
+          }
+          let branchExists = false;
+          try {
+            execFileSync('git', ['-c', 'safe.directory=*', 'rev-parse', '--verify', branch], {
+              cwd: REPO_ROOT,
+              stdio: ['ignore', 'pipe', 'pipe']
+            });
+            branchExists = true;
+          } catch {
+            branchExists = false;
+          }
+
+          if (branchExists) {
+            execFileSync('git', ['-c', 'safe.directory=*', 'worktree', 'add', worktreePath, branch], {
+              cwd: REPO_ROOT,
+              stdio: ['ignore', 'pipe', 'pipe']
+            });
+          } else {
+            execFileSync('git', ['-c', 'safe.directory=*', 'worktree', 'add', '-b', branch, worktreePath, 'HEAD'], {
+              cwd: REPO_ROOT,
+              stdio: ['ignore', 'pipe', 'pipe']
+            });
+          }
+        }
+
+        const wtStateDir = path.join(worktreePath, '.ai');
+        if (!fs.existsSync(wtStateDir)) {
+          fs.mkdirSync(wtStateDir, { recursive: true });
+        }
+        const wtStateFile = path.join(wtStateDir, 'state.json');
+        let wtState;
+        if (fs.existsSync(wtStateFile)) {
+          wtState = loadState(wtStateFile);
+        } else {
+          const runId = runIdArg || `run-${taskId}-${Date.now()}`;
+          const opts = getEngineOptions(runId, goldenShaArg);
+          const engine = new LoopEngine(opts);
+          engine.transition('SPEC_GATE');
+          wtState = engine.transition('ISOLATE');
+          atomicSaveState(wtStateFile, wtState);
+        }
+
+        const result = {
+          reused,
+          taskId,
+          branch,
+          worktree: worktreePath,
+          runId: wtState.runId,
+          currentPhase: wtState.currentPhase
+        };
+
+        if (jsonOutput) {
+          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+        } else {
+          process.stdout.write(`[ai-loop] ${reused ? 'Reused' : 'Isolated'} task '${taskId}' in worktree: ${worktreePath} (Phase: ${wtState.currentPhase})\n`);
+        }
+        break;
+      }
+
+      case 'pitfalls': {
+        const { matchPitfalls } = await import('./harness/pitfall-matcher.mjs');
+        const query = cmdArgs.join(' ') || '';
+        const matchResult = matchPitfalls(query);
+        if (jsonOutput) {
+          process.stdout.write(JSON.stringify(matchResult, null, 2) + '\n');
+        } else {
+          if (matchResult.matches.length === 0) {
+            process.stdout.write('[ai-loop] No specific pitfall triggers matched.\n');
+          } else {
+            process.stdout.write(matchResult.markdown + '\n');
+          }
         }
         break;
       }

@@ -170,7 +170,7 @@ test("ai-loop: rollback --code restores tracked edits while preserving untracked
     const rbState = JSON.parse(rbRes.stdout);
     assert.equal(rbState.currentPhase, "INITIALIZE");
 
-    assert.equal(fs.readFileSync(trackedFile, "utf-8"), "clean baseline\n");
+    assert.equal(fs.readFileSync(trackedFile, "utf-8").replace(/\r\n/g, '\n'), "clean baseline\n");
 
     assert.ok(fs.existsSync(untrackedFile), "Untracked file must be preserved");
     assert.equal(fs.readFileSync(untrackedFile, "utf-8"), "should survive rollback\n");
@@ -178,3 +178,26 @@ test("ai-loop: rollback --code restores tracked edits while preserving untracked
     fs.rmSync(tempGitDir, { recursive: true, force: true });
   }
 });
+
+test("ai-loop: pitfalls command returns matched pitfall markdown and JSON", () => {
+  const result = runAiLoop(["pitfalls", "cache", "prompt"]);
+  assert.equal(result.status, 0);
+  assert.ok(result.stdout.includes("PITFALL-010"));
+
+  const jsonResult = runAiLoop(["pitfalls", "cache", "--json"]);
+  assert.equal(jsonResult.status, 0);
+  const parsed = JSON.parse(jsonResult.stdout);
+  assert.ok(Array.isArray(parsed.matches));
+  assert.ok(parsed.matches.some((m: { id: string }) => m.id === "PITFALL-010"));
+});
+
+test("ai-loop: isolate command rejects invalid task IDs and path traversal", () => {
+  const badId1 = runAiLoop(["isolate", "--task", "../../main"]);
+  assert.equal(badId1.status, 1);
+  assert.ok(badId1.stderr.includes("CONFIG_INVALID"));
+
+  const badId2 = runAiLoop(["isolate", "--task", "INVALID!TASK"]);
+  assert.equal(badId2.status, 1);
+  assert.ok(badId2.stderr.includes("CONFIG_INVALID"));
+});
+

@@ -205,6 +205,38 @@ pm test: Exit Code 0 (10/10 tests passed in 216ms via node --test)
   - `[MODIFIED]` [test/ai-loop.test.ts](test/ai-loop.test.ts) (Added 3 CLI tests for loop rollback and git restore)
   - `[MODIFIED]` [test/init-template.test.ts](test/init-template.test.ts) (Added clean-slate assertions)
 
+---
+
+## [2026-09-06 18:20] UPGRADE | Kins-Multiagents-UI Tranche 1 Adoptions
+
+- **Run ID:** `upgrade-tranche1-20260906`
+- **Outcome:** `PASSED`
+- **Phases Completed:** `INITIALIZE` -> `SPEC_GATE` -> `ISOLATE` -> `DETECT_STACKS` -> `PLAN` (Layer 1 GPT Blueprint) -> `EXECUTE` (Layer 2 Gemini) -> `VERIFY` ($0 Local CPU) -> `REALITY_CHECK` -> `RELEASE_GATE`
+- **Counters:** verificationRetry: 0 | qualityRemediation: 0 | globalCycles: 1
+- **Verification Evidence:**
+  - 46/46 Unit Tests passed via `npm test` (0 failures in 5.4s)
+  - Strict TypeScript compilation passed cleanly via `npm run typecheck` (0 errors)
+  - Fast AST preflight passed via `node scripts/preflight.mjs` (9 files in 27.9ms)
+  - Anti-gaming verified via `node scripts/harness/anti-gaming.mjs` (0 violations)
+  - Dynamic pitfall querying verified via `node scripts/ai-loop.mjs pitfalls cache`
+- **Files Added / Modified:**
+  - `[NEW]` [scripts/harness/pitfall-matcher.d.mts](scripts/harness/pitfall-matcher.d.mts)
+  - `[NEW]` [scripts/harness/pitfall-matcher.mjs](scripts/harness/pitfall-matcher.mjs)
+  - `[NEW]` [scripts/harness/anti-gaming.d.mts](scripts/harness/anti-gaming.d.mts)
+  - `[NEW]` [scripts/harness/anti-gaming.mjs](scripts/harness/anti-gaming.mjs)
+  - `[NEW]` [scripts/preflight.d.mts](scripts/preflight.d.mts)
+  - `[NEW]` [scripts/preflight.mjs](scripts/preflight.mjs)
+  - `[NEW]` [test/pitfall-matcher.test.ts](test/pitfall-matcher.test.ts)
+  - `[NEW]` [test/preflight.test.ts](test/preflight.test.ts)
+  - `[NEW]` [test/anti-gaming.test.ts](test/anti-gaming.test.ts)
+  - `[MODIFIED]` [wiki/pitfalls.md](wiki/pitfalls.md) (Registered PITFALL-009, 010, 011, 013, 014)
+  - `[MODIFIED]` [src/engine.ts](src/engine.ts) (Resilient rollback from FAILED/BLOCKED & metadata in TransitionRecord)
+  - `[MODIFIED]` [scripts/ai-loop.mjs](scripts/ai-loop.mjs) (Added `isolate --task <id>` and `pitfalls [query]`)
+  - `[MODIFIED]` [package.json](package.json) (Added `preflight` and `anti-gaming` scripts)
+  - `[MODIFIED]` [test/engine.test.ts](test/engine.test.ts)
+  - `[MODIFIED]` [test/ai-loop.test.ts](test/ai-loop.test.ts)
+
+
 
 
 
